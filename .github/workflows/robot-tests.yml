@@ -1,0 +1,53 @@
+name: Robot Framework E2E Tests
+
+on:
+  workflow_dispatch:   # Permite rodar manualmente pela UI
+  schedule:
+    - cron: '0 23 * * *'   # 23h UTC todos os dias
+
+jobs:
+  robot-tests:
+    name: Run Robot E2E Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m robotframework_browser install
+
+      - name: Run Robot Framework tests
+        run: |
+          mkdir -p results
+          robot \
+            --output results/output.xml \
+            --log results/log.html \
+            --report results/report.html \
+            tests/
+
+      - name: Upload Robot results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-results
+          path: results/
+
+      - name: Upload Playwright logs (if exists)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-logs
+          path: results/playwright-log.txt

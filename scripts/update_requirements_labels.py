@@ -36,32 +36,20 @@ FAIL_LABEL = "❌ Fail"
 # --------------------
 # Funções
 # --------------------
-def parse_robot_results(xml_path="results/output.xml"):
-    """Parse do XML do Robot Framework e retorna dict {issue_number: [status,...]}"""
-    if not os.path.exists(xml_path):
-        print(f"[WARN] XML file not found: {xml_path}")
-        return {}
-
-    tree = ET.parse(xml_path)
+def parse_robot_results(path):
+    import xml.etree.ElementTree as ET
+    tree = ET.parse(path)
     root = tree.getroot()
-
     results = {}
-
-    for test in root.iter("test"):
-        status_elem = test.find("status")
-        status = status_elem.text if status_elem is not None else "FAIL"
-        tags_elem = test.find("tags")
-
-        if tags_elem is None:
-            continue  # Ignora testes sem tags
-
-        for t in tags_elem.iter("tag"):
-            tag = t.text
+    for test in root.findall(".//test"):
+        tags = [t.text for t in test.findall("tag")]  # <- aqui pegamos direto
+        status = test.get("result")
+        for tag in tags:
             issue_number = issue_map.get(tag)
             if issue_number:
                 results.setdefault(issue_number, []).append(status)
-
     return results
+
 
 
 def determine_issue_label(status_list):

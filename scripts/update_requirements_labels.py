@@ -61,7 +61,7 @@ def main():
     g = Github(auth=Auth.Token(GITHUB_TOKEN))
     repo = g.get_repo(REPO_NAME)
 
-    results = parse_robot_results()
+    results = parse_robot_results("results/output.xml")
     if not results:
         print("[INFO] No tests found to update.")
         return

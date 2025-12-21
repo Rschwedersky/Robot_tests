@@ -6,7 +6,7 @@ from github import Github, Auth
 # --------------------
 # Configurações
 # --------------------
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+GITHUB_TOKEN = os.environ.get("GH_PAT")
 REPO_NAME = "Rschwedersky/Robot_tests"
 
 # Mapeamento de tags do Robot Framework para número da issue

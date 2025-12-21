@@ -2,12 +2,15 @@
 Library  Browser
 Resource  variables.robot
 
+*** Variables ***
+${HEADLESS}    True
 
 *** Keywords ***
 Open Application
-    New Browser   ${BROWSER}   headless=false
+    New Browser    chromium    headless=${HEADLESS}
     New Context
-    New Page  ${BASE_URL}
+    New Page
+    Go To    ${BASE_URL}
 
 Close Application
     Close Browser

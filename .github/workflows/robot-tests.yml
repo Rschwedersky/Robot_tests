@@ -26,8 +26,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          python -m robotframework_browser install
+          pip install robotframework robotframework-browser
+          rfbrowser init
+
 
       - name: Run Robot Framework tests
         run: |

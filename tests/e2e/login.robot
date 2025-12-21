@@ -7,11 +7,11 @@ Test Teardown   Close Application
 
 *** Test Cases ***
 
-POC Login Click
-    [Tags]    REQ-AUTH-001
-    Fill Text  css=input[data-test="username"]  standard_user
-    Fill Text  css=input[data-test="password"]  secret_sauce
-    AI Click    login button
+#POC Login Click
+#    [Tags]    REQ-AUTH-001
+#    Fill Text  css=input[data-test="username"]  standard_user
+#    Fill Text  css=input[data-test="password"]  secret_sauce
+#    AI Click    login button
 
 Login com credenciais válidas
     [Tags]    smoke    positive    REQ-AUTH-001

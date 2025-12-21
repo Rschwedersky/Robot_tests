@@ -6,7 +6,7 @@ from github import Github, Auth
 # --------------------
 # Configurações
 # --------------------
-GITHUB_TOKEN = os.environ.get("GH_PAT")
+token = os.environ.get("GH_PAT")  
 REPO_NAME = "Rschwedersky/Robot_tests"
 
 # Mapeamento de tags do Robot Framework para número da issue
@@ -58,7 +58,7 @@ def determine_issue_label(status_list):
 
 
 def main():
-    g = Github(auth=Auth.Token(GITHUB_TOKEN))
+    g = Github(auth=Auth.Token(token))
     repo = g.get_repo(REPO_NAME)
 
     results = parse_robot_results("results/output.xml")

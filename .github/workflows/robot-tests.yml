@@ -41,7 +41,7 @@ jobs:
       - name: Update requirement labels
         if: always()
         env:
-          env:GH_PAT: ${{ secrets.GH_PAT }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           python scripts/update_requirements_labels.py
 

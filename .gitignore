@@ -16,9 +16,7 @@ log.html
 report.html
 *.robot~   # backup files
 
-# Environment files
-.env
-.env.*  
+# Environment files 
 
 # IDE / Editor
 .vscode/

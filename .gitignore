@@ -1,0 +1,27 @@
+git rm --cached .env# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Robot Framework
+results/
+output.xml
+log.html
+report.html
+*.robot~   # backup files
+
+# Environment files
+.env
+.env.*  
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo

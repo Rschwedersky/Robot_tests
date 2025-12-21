@@ -6,7 +6,7 @@ Library     Collections
 
 *** Test Cases ***
 Visualizar lista de produtos
-    [Tags]    smoke    products
+    [Tags]    smoke    products    REQ-PROD-001
     Login With Credentials    ${VALID_USER}    ${VALID_PASSWORD}
     Should Be On Products Page
     Wait For Elements State    css=div[data-test="inventory-list"]    visible
@@ -15,21 +15,21 @@ Visualizar lista de produtos
 
 
 Quantidade correta de produtos exibidos
-    [Tags]    regression    products
+    [Tags]    regression    products    REQ-PROD-002
     Login With Credentials    ${VALID_USER}    ${VALID_PASSWORD}
     Should Be On Products Page
     ${count}=    Get Element Count    css=div[data-test="inventory-item"]
     Should Be Equal As Integers    ${count}    6
 
 Abrir detalhes de um produto
-    [Tags]    regression    products
+    [Tags]    regression    products    REQ-PROD-003
     Login With Credentials    ${VALID_USER}    ${VALID_PASSWORD}
     Should Be On Products Page
     Click    css=a[data-test="item-4-title-link"]
     Wait For Elements State    css=div[data-test="inventory-item-name"]    visible
 
 Ordenar produtos por preço (low to high)
-    [Tags]    regression    products
+    [Tags]    regression    products    REQ-PROD-005
     Login With Credentials    ${VALID_USER}    ${VALID_PASSWORD}
     Should Be On Products Page
     Wait For Elements State    css=div[data-test="inventory-list"]    visible
@@ -47,7 +47,7 @@ Ordenar produtos por preço (low to high)
     Lists Should Be Equal    ${prices}    ${sorted}
 
 Ordenar produtos por preço (hi-lo vs lo-hi)
-    [Tags]    regression    products
+    [Tags]    regression    products    REQ-PROD-005
     Login With Credentials    ${VALID_USER}    ${VALID_PASSWORD}
     Should Be On Products Page
     Wait For Elements State    css=div[data-test="inventory-list"]    visible
@@ -75,7 +75,7 @@ Ordenar produtos por preço (hi-lo vs lo-hi)
     Lists Should Be Equal    ${lo_to_hi}    ${expected_lo_to_hi}
 
 Ordenar produtos por nome (Z-A vs A-Z)
-    [Tags]    regression    products
+    [Tags]    regression    products    REQ-PROD-004
     Login With Credentials    ${VALID_USER}    ${VALID_PASSWORD}
     Should Be On Products Page
     Wait For Elements State    css=div[data-test="inventory-list"]    visible

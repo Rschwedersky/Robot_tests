@@ -1,78 +1,74 @@
 import os
+import re
 from github import Github
 from github.Auth import Token
 
-# ---- CONFIG -------------------------------------------------
-
-PROCEDURE_REQUIREMENTS = {
-    "PROC-001": [
-        "REQ-AUTH-001",
-        "REQ-PROD-001",
-        "REQ-CART-001",
-        "REQ-CART-004",
-        "REQ-CHK-001",
-        "REQ-CHK-006",
-    ],
-    # PROC-002, PROC-003...
-}
-
-ISSUE_MAP = {
-    "REQ-AUTH-001": 2,
-    "REQ-PROD-001": 4,
-    "REQ-CART-001": 9,
-    "REQ-CART-004": 12,
-    "REQ-CHK-001": 13,
-    "REQ-CHK-006": 18,
-}
+REQ_PATTERN = re.compile(r"(REQ-[A-Z]+-\d+)")
 
 LABEL_PASS = "✅ Pass"
 LABEL_FAIL = "❌ Fail"
 
-# ------------------------------------------------------------
+
+def extract_requirements_from_procedure(path):
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    return sorted(set(REQ_PATTERN.findall(content)))
+
+
+def build_issue_map(repo):
+    issue_map = {}
+
+    for issue in repo.get_issues(state="all"):
+        match = REQ_PATTERN.search(issue.title)
+        if match:
+            issue_map[match.group(1)] = issue
+
+    return issue_map
+
 
 def main():
     token = os.getenv("GH_PAT")
-    procedure_raw = os.getenv("PROCEDURE", "")
-    procedure = procedure_raw.split("—")[0].strip()
-    result = os.getenv("RESULT")
+    procedure = os.getenv("PROCEDURE")          # ex: PROC-001
+    result = os.getenv("RESULT")                # pass / fail
     run_id = os.getenv("GITHUB_RUN_ID")
     repo_name = os.getenv("GITHUB_REPOSITORY")
 
     if not token:
         raise RuntimeError("GH_PAT not provided")
 
-    requirements = PROCEDURE_REQUIREMENTS.get(procedure)
+    procedure_path = f"procedures/{procedure}.md"
+    if not os.path.exists(procedure_path):
+        raise RuntimeError(f"Procedure file not found: {procedure_path}")
+
+    requirements = extract_requirements_from_procedure(procedure_path)
+
     if not requirements:
-        print(f"[INFO] No requirements mapped for {procedure}")
+        print("[INFO] No requirements found in procedure")
         return
 
     g = Github(auth=Token(token))
     repo = g.get_repo(repo_name)
 
+    issue_map = build_issue_map(repo)
+
     run_url = f"https://github.com/{repo_name}/actions/runs/{run_id}"
-    label = LABEL_PASS if result == "pass" else LABEL_FAIL
+    label = LABEL_PASS if result.lower() == "pass" else LABEL_FAIL
 
     for req in requirements:
-        issue_number = ISSUE_MAP.get(req)
-        if not issue_number:
-            print(f"[WARN] No issue mapped for {req}")
+        issue = issue_map.get(req)
+
+        if not issue:
+            print(f"[WARN] Requirement issue not found: {req}")
             continue
 
-        try:
-            issue = repo.get_issue(number=issue_number)
-        except Exception as e:
-            print(f"[ERROR] Could not access issue #{issue_number} ({req}): {e}")
-            continue
-
-
-        # Atualiza label
         issue.set_labels(label)
 
-        # Comenta com evidência
         issue.create_comment(
             f"""🧪 **Manual Test Execution**
 
 **Procedure:** `{procedure}`  
+**Requirement:** `{req}`  
 **Result:** {label}
 
 📎 **Evidence (workflow artifacts):**  
@@ -80,7 +76,8 @@ def main():
 """
         )
 
-        print(f"[INFO] Issue #{issue_number} updated")
+        print(f"[INFO] Issue #{issue.number} ({req}) updated")
+
 
 if __name__ == "__main__":
     main()

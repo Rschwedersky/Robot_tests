@@ -4,16 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       procedure:
-        description: "Select the manual test procedure"
+        description: "Procedure ID (e.g. PROC-001)"
         required: true
         type: choice
         options:
-          - PROC-001 — Compra completa end-to-end
-          - PROC-002 — Login inválido
-          - PROC-003 — Adição e remoção de itens no carrinho
-          - PROC-004 — Checkout com dados inválidos
-          - PROC-005 — Logout e sessão
-
+          - PROC-001
+          - PROC-002
+          - PROC-003
       result:
         description: "Test result"
         required: true
@@ -25,33 +22,17 @@ on:
 jobs:
   manual-test:
     runs-on: ubuntu-latest
-
-    permissions:
-      issues: write
-      contents: read
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Upload evidence
-        uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: manual-evidence-${{ inputs.procedure }}
-          path: evidence/**
+          python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install PyGithub
+      - run: pip install PyGithub
 
-
-      - name: Update requirements
+      - run: python scripts/update_manual_requirements.py
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
           PROCEDURE: ${{ inputs.procedure }}
           RESULT: ${{ inputs.result }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          python scripts/update_manual_requirements.py

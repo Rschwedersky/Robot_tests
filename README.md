@@ -90,7 +90,7 @@ Updates requirement issues with:
 ❌ Fail
 
 Workflow Run Example
-![Screenshot: GitHub Actions run with uploaded artifacts](.pics/robot_workflow.png)
+![Screenshot: GitHub Actions run with uploaded artifacts](pics/robot_workflow.png)
 
 Link to workflow:  
 https://github.com/Rschwedersky/Robot_tests/actions/workflows/robot-tests.yml
@@ -108,7 +108,7 @@ Comments reference the workflow run that produced the result
 
 Requirement Issue
 
-![Screenshot: Issue with labels and execution comment](.pics/requirements.png)
+![Screenshot: Issue with labels and execution comment](pics/requirements.png)
 https://github.com/Rschwedersky/Robot_tests/issues/17
 
 🧾 Manual Test Procedures
@@ -152,7 +152,8 @@ Updates requirement labels accordingly
 
 Manual Workflow Input
 
-![Screenshot: workflow_dispatch inputs](https://github.com/Rschwedersky/Robot_tests/blob/main/pics/manual_workflow.png)
+![Screenshot: workflow_dispatch inputs](pics/manual_workflow.png)
+
 https://github.com/Rschwedersky/Robot_tests/actions/runs/20461606889/job/58795432543
 
 🔗 Traceability Model
@@ -179,7 +180,7 @@ Overall quality health
 
 GitHub Project Board
 
-![Screenshot: Project board with requirements](.pics/projects_dash.png)
+![Screenshot: Project board with requirements](pics/projects_dash.png)
 https://github.com/users/Rschwedersky/projects/1/views/1?visibleFields=%5B%22Title%22%2C%22Labels%22%5D
 
 🔐 Security & Secrets

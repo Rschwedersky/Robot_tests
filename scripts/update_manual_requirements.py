@@ -37,7 +37,7 @@ def main():
     if not token:
         raise RuntimeError("GH_PAT not provided")
 
-    procedure_path = f"procedures/{procedure}.md"
+    procedure_path = f"manual-tests/{procedure}.md"
     if not os.path.exists(procedure_path):
         raise RuntimeError(f"Procedure file not found: {procedure_path}")
 

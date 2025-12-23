@@ -4,10 +4,6 @@ from robot.api import ExecutionResult
 from github import Github, Auth
 
 
-# =========================
-# CONFIG
-# =========================
-
 RESULTS_PATH = "results/output.xml"
 
 ISSUE_MAP = {
@@ -33,35 +29,29 @@ LABEL_PASS = "✅ Pass"
 LABEL_FAIL = "❌ Fail"
 
 
-# =========================
-# PARSE ROBOT RESULTS
-# =========================
-
 def parse_robot_results(path):
     if not os.path.exists(path):
         print(f"[ERROR] output.xml not found: {path}")
         sys.exit(1)
 
     result = ExecutionResult(path)
-    result.configure(statistics=False, timeline=False)
 
     results = {}  # issue_number -> [PASS, FAIL]
 
-    for test in result.suite.tests:
-        status = test.status  # PASS / FAIL
-        tags = test.tags
+    def walk(suite):
+        for test in suite.tests:
+            status = test.status  # PASS / FAIL
+            for tag in test.tags:
+                if tag in ISSUE_MAP:
+                    issue_number = ISSUE_MAP[tag]
+                    results.setdefault(issue_number, []).append(status)
 
-        for tag in tags:
-            if tag in ISSUE_MAP:
-                issue_number = ISSUE_MAP[tag]
-                results.setdefault(issue_number, []).append(status)
+        for child in suite.suites:
+            walk(child)
 
+    walk(result.suite)
     return results
 
-
-# =========================
-# DECISION LOGIC
-# =========================
 
 def decide_label(statuses):
     if not statuses:
@@ -70,10 +60,6 @@ def decide_label(statuses):
         return LABEL_FAIL
     return LABEL_PASS
 
-
-# =========================
-# MAIN
-# =========================
 
 def main():
     token = os.getenv("GH_PAT")

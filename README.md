@@ -152,7 +152,7 @@ Updates requirement labels accordingly
 
 Manual Workflow Input
 
-![Screenshot: workflow_dispatch inputs](.pics/manual_workflow.png)
+![Screenshot: workflow_dispatch inputs](https://github.com/Rschwedersky/Robot_tests/blob/main/pics/manual_workflow.png)
 https://github.com/Rschwedersky/Robot_tests/actions/runs/20461606889/job/58795432543
 
 🔗 Traceability Model

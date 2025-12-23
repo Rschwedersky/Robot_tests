@@ -1,16 +1,17 @@
-#!/usr/bin/env python3
 import os
+import sys
 import xml.etree.ElementTree as ET
-from github import Github, Auth
+from github import Github
+from github import Auth
 
-# --------------------
-# Configurações
-# --------------------
-token = os.environ.get("GH_PAT")  
-REPO_NAME = "Rschwedersky/Robot_tests"
 
-# Mapeamento de tags do Robot Framework para número da issue
-issue_map = {
+# =========================
+# CONFIG
+# =========================
+
+RESULTS_PATH = "results/output.xml"
+
+ISSUE_MAP = {
     "REQ-AUTH-001": 2,
     "REQ-AUTH-002": 3,
     "REQ-PROD-001": 4,
@@ -26,61 +27,114 @@ issue_map = {
     "REQ-CHK-002": 14,
     "REQ-CHK-003": 15,
     "REQ-CHK-004": 16,
-    "REQ-CHK-005": 17
+    "REQ-CHK-005": 17,
 }
 
-# Labels
-PASS_LABEL = "✅ Pass"
-FAIL_LABEL = "❌ Fail"
+LABEL_PASS = "✅ Pass"
+LABEL_FAIL = "❌ Fail"
 
-# --------------------
-# Funções
-# --------------------
-def parse_robot_results(path):
-    import xml.etree.ElementTree as ET
+
+# =========================
+# PARSE ROBOT OUTPUT
+# =========================
+
+def parse_robot_results(path: str):
+    if not os.path.exists(path):
+        print(f"[ERROR] Robot output not found: {path}")
+        sys.exit(1)
+
     tree = ET.parse(path)
     root = tree.getroot()
-    results = {}
-    for test in root.findall(".//test"):
-        tags = [t.text for t in test.findall("tag")]  # <- aqui pegamos direto
-        status = test.get("result")
+
+    results = {}  # issue_number -> [PASS, FAIL]
+
+    for test in root.iter("test"):
+        status_node = test.find("status")
+        if status_node is None:
+            continue
+
+        status = status_node.attrib.get("status")  # PASS / FAIL
+
+        tags_node = test.find("tags")
+        if tags_node is None:
+            continue
+
+        tags = [t.text for t in tags_node.iter("tag")]
+
         for tag in tags:
-            issue_number = issue_map.get(tag)
-            if issue_number:
+            if tag in ISSUE_MAP:
+                issue_number = ISSUE_MAP[tag]
                 results.setdefault(issue_number, []).append(status)
+
     return results
 
 
+# =========================
+# DECISION LOGIC
+# =========================
 
-def determine_issue_label(status_list):
-    """Se todos PASS -> Pass, senão Fail"""
-    return PASS_LABEL if all(s == "PASS" for s in status_list) else FAIL_LABEL
+def decide_label(statuses):
+    """
+    Requisito:
+    - FAIL se pelo menos 1 teste falhar
+    - PASS se todos passarem
+    - None se nenhum teste encontrado
+    """
+    if not statuses:
+        return None
 
+    if "FAIL" in statuses:
+        return LABEL_FAIL
+
+    return LABEL_PASS
+
+
+# =========================
+# MAIN
+# =========================
 
 def main():
-    g = Github(auth=Auth.Token(token))
-    repo = g.get_repo(REPO_NAME)
+    token = os.getenv("GH_PAT")
+    if not token:
+        print("[ERROR] GH_PAT not defined")
+        sys.exit(1)
 
-    results = parse_robot_results("results/output.xml")
+    results = parse_robot_results(RESULTS_PATH)
+
     if not results:
         print("[INFO] No tests found to update.")
         return
 
+    auth = Auth.Token(token)
+    gh = Github(auth=auth)
+
+    repo_name = os.getenv("GITHUB_REPOSITORY")
+    if not repo_name:
+        print("[ERROR] GITHUB_REPOSITORY not available")
+        sys.exit(1)
+
+    repo = gh.get_repo(repo_name)
+
     for issue_number, statuses in results.items():
+        label = decide_label(statuses)
+        if not label:
+            continue
+
         try:
             issue = repo.get_issue(number=issue_number)
-            label_to_add = determine_issue_label(statuses)
 
-            # Remove label oposta, se existir
-            remove_label = FAIL_LABEL if label_to_add == PASS_LABEL else PASS_LABEL
-            if remove_label in [l.name for l in issue.labels]:
-                issue.remove_from_labels(remove_label)
+            # Remove labels antigos de status
+            existing_labels = [l.name for l in issue.labels]
+            new_labels = [
+                l for l in existing_labels
+                if l not in (LABEL_PASS, LABEL_FAIL)
+            ]
+            new_labels.append(label)
 
-            # Adiciona label atual
-            if label_to_add not in [l.name for l in issue.labels]:
-                issue.add_to_labels(label_to_add)
+            issue.set_labels(*new_labels)
 
-            print(f"[INFO] Issue #{issue_number} updated with label '{label_to_add}'")
+            print(f"[INFO] Issue #{issue_number} -> {label}")
+
         except Exception as e:
             print(f"[ERROR] Could not update issue #{issue_number}: {e}")
 

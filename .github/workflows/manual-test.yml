@@ -1,0 +1,51 @@
+name: Manual Test Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      procedure:
+        description: "Select the manual test procedure"
+        required: true
+        type: choice
+        options:
+          - PROC-001 — Compra completa end-to-end
+          - PROC-002 — Login inválido
+          - PROC-003 — Adição e remoção de itens no carrinho
+          - PROC-004 — Checkout com dados inválidos
+          - PROC-005 — Logout e sessão
+
+      result:
+        description: "Test result"
+        required: true
+        type: choice
+        options:
+          - pass
+          - fail
+
+jobs:
+  manual-test:
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: manual-evidence-${{ inputs.procedure }}
+          path: evidence/**
+
+      - name: Update requirements
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          PROCEDURE: ${{ inputs.procedure }}
+          RESULT: ${{ inputs.result }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python scripts/update_manual_requirements.py

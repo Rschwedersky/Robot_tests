@@ -58,7 +58,12 @@ def main():
             print(f"[WARN] No issue mapped for {req}")
             continue
 
-        issue = repo.get_issue(number=issue_number)
+        try:
+            issue = repo.get_issue(number=issue_number)
+        except Exception as e:
+            print(f"[ERROR] Could not access issue #{issue_number} ({req}): {e}")
+            continue
+
 
         # Atualiza label
         issue.set_labels(label)

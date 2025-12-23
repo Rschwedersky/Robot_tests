@@ -32,7 +32,8 @@ LABEL_FAIL = "❌ Fail"
 
 def main():
     token = os.getenv("GH_PAT")
-    procedure = os.getenv("PROCEDURE")
+    procedure_raw = os.getenv("PROCEDURE", "")
+    procedure = procedure_raw.split("—")[0].strip()
     result = os.getenv("RESULT")
     run_id = os.getenv("GITHUB_RUN_ID")
     repo_name = os.getenv("GITHUB_REPOSITORY")

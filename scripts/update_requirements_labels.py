@@ -1,8 +1,7 @@
 import os
 import sys
-import xml.etree.ElementTree as ET
-from github import Github
-from github import Auth
+from robot.api import ExecutionResult
+from github import Github, Auth
 
 
 # =========================
@@ -35,31 +34,22 @@ LABEL_FAIL = "❌ Fail"
 
 
 # =========================
-# PARSE ROBOT OUTPUT
+# PARSE ROBOT RESULTS
 # =========================
 
-def parse_robot_results(path: str):
+def parse_robot_results(path):
     if not os.path.exists(path):
-        print(f"[ERROR] Robot output not found: {path}")
+        print(f"[ERROR] output.xml not found: {path}")
         sys.exit(1)
 
-    tree = ET.parse(path)
-    root = tree.getroot()
+    result = ExecutionResult(path)
+    result.configure(statistics=False, timeline=False)
 
     results = {}  # issue_number -> [PASS, FAIL]
 
-    for test in root.iter("test"):
-        status_node = test.find("status")
-        if status_node is None:
-            continue
-
-        status = status_node.attrib.get("status")  # PASS / FAIL
-
-        tags_node = test.find("tags")
-        if tags_node is None:
-            continue
-
-        tags = [t.text for t in tags_node.iter("tag")]
+    for test in result.suite.tests:
+        status = test.status  # PASS / FAIL
+        tags = test.tags
 
         for tag in tags:
             if tag in ISSUE_MAP:
@@ -74,18 +64,10 @@ def parse_robot_results(path: str):
 # =========================
 
 def decide_label(statuses):
-    """
-    Requisito:
-    - FAIL se pelo menos 1 teste falhar
-    - PASS se todos passarem
-    - None se nenhum teste encontrado
-    """
     if not statuses:
         return None
-
     if "FAIL" in statuses:
         return LABEL_FAIL
-
     return LABEL_PASS
 
 
@@ -99,20 +81,18 @@ def main():
         print("[ERROR] GH_PAT not defined")
         sys.exit(1)
 
+    repo_name = os.getenv("GITHUB_REPOSITORY")
+    if not repo_name:
+        print("[ERROR] GITHUB_REPOSITORY not available")
+        sys.exit(1)
+
     results = parse_robot_results(RESULTS_PATH)
 
     if not results:
         print("[INFO] No tests found to update.")
         return
 
-    auth = Auth.Token(token)
-    gh = Github(auth=auth)
-
-    repo_name = os.getenv("GITHUB_REPOSITORY")
-    if not repo_name:
-        print("[ERROR] GITHUB_REPOSITORY not available")
-        sys.exit(1)
-
+    gh = Github(auth=Auth.Token(token))
     repo = gh.get_repo(repo_name)
 
     for issue_number, statuses in results.items():
@@ -123,20 +103,18 @@ def main():
         try:
             issue = repo.get_issue(number=issue_number)
 
-            # Remove labels antigos de status
-            existing_labels = [l.name for l in issue.labels]
+            existing = [l.name for l in issue.labels]
             new_labels = [
-                l for l in existing_labels
+                l for l in existing
                 if l not in (LABEL_PASS, LABEL_FAIL)
             ]
             new_labels.append(label)
 
             issue.set_labels(*new_labels)
-
             print(f"[INFO] Issue #{issue_number} -> {label}")
 
         except Exception as e:
-            print(f"[ERROR] Could not update issue #{issue_number}: {e}")
+            print(f"[ERROR] Issue #{issue_number}: {e}")
 
 
 if __name__ == "__main__":
